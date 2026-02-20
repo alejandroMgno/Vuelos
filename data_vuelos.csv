@@ -1,0 +1,4 @@
+id,Pasajero,Origen,Destino,Estado,Costo,PNR,Equipaje,Extra,Fecha,Hora,Soporte,Pais,Usuario
+1,ALEXANDER PIERCE,JFK,LHR,Activo,2450.0,XP-992,FULL,NO,2026-03-09,22:15,,,
+2,SARAH JENKINS,MEX,CDG,Abierto (Disponible),1800.0,FR-112,MANO,SÍ,2024-05-15,11:00,,,
+3,JOSE ALEJANDRO RUBIO MENDOZA,TRC,MTY,Activo,5000.0,XFJ456783,DOCUMENTADO,NO,2026-02-27,09:38,attachments\3_remision.pdf,MÉXICO,ADMIN
