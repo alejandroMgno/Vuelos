@@ -61,7 +61,7 @@ def render():
     proximos = df[df['Fecha'].dt.date >= hoy].sort_values('Fecha')
     
     col_p1, col_p2 = st.columns([3, 1])
-    col_p1.dataframe(proximos[['Pasajero', 'Clave_de_Reserva', 'Fecha', 'Origen', 'Destino', 'Estado']].head(5), use_container_width=True)
+    col_p1.dataframe(proximos[['Pasajero', 'PNR', 'Fecha', 'Origen', 'Destino', 'Estado']].head(5), use_container_width=True)
     col_p2.markdown("<br>", unsafe_allow_html=True)
     col_p2.download_button("🛫 Exportar Próximos", descargar_datos(proximos, "Proximos"), "proximos_vuelos.xlsx", use_container_width=True)
 
@@ -74,7 +74,7 @@ def render():
     
     col_a1, col_a2 = st.columns([3, 1])
     # Mostramos las columnas más relevantes, incluyendo el Costo
-    col_a1.dataframe(abiertos_df[['Pasajero', 'Clave_de_Reserva', 'Costo', 'Fecha', 'Origen', 'Destino']].head(5), use_container_width=True)
+    col_a1.dataframe(abiertos_df[['Pasajero', 'PNR', 'Costo', 'Fecha', 'Origen', 'Destino']].head(5), use_container_width=True)
     col_a2.markdown("<br>", unsafe_allow_html=True)
     col_a2.download_button("📥 Exportar Abiertos", descargar_datos(abiertos_df, "Abiertos_Detalle"), "tickets_abiertos_detalle.xlsx", use_container_width=True)
 

@@ -40,12 +40,12 @@ def modal_gestion(vuelo):
         st.session_state[llave_edicion] = False
 
     st.markdown(f"### {vuelo['Pasajero']}")
-    st.markdown(f"<code style='color:#00d4ff;'>Clave_de_Reserva: {vuelo['Clave_de_Reserva']} // ID_DB: {vuelo['id']}</code>", unsafe_allow_html=True)
+    st.markdown(f"<code style='color:#00d4ff;'>PNR: {vuelo['PNR']} // ID_DB: {vuelo['id']}</code>", unsafe_allow_html=True)
     
     # Indicador de Canje
     boleto_ligado = vuelo.get('Boleto_Ligado', '')
     if pd.notna(boleto_ligado) and boleto_ligado != "":
-        st.info(f"🔄 **ACTIVO PROVENIENTE DE CANJE:** Reutilizó el saldo del Clave_de_Reserva original **{boleto_ligado}**.")
+        st.info(f"🔄 **ACTIVO PROVENIENTE DE CANJE:** Reutilizó el saldo del PNR original **{boleto_ligado}**.")
     
     st.divider()
     esta_bloqueado = not st.session_state[llave_edicion]
@@ -53,7 +53,7 @@ def modal_gestion(vuelo):
     col1, col2 = st.columns(2)
     with col1:
         nuevo_pax = st.text_input("PASAJERO", value=vuelo['Pasajero'], disabled=esta_bloqueado, key=f"edit_pax_{vuelo['id']}")
-        nuevo_pnr = st.text_input("Clave_de_Reserva", value=vuelo['Clave_de_Reserva'], disabled=esta_bloqueado, key=f"edit_pnr_{vuelo['id']}").upper()
+        nuevo_pnr = st.text_input("PNR", value=vuelo['PNR'], disabled=esta_bloqueado, key=f"edit_pnr_{vuelo['id']}").upper()
         nuevo_ori = st.text_input("ORIGEN", value=vuelo['Origen'], disabled=esta_bloqueado, key=f"edit_ori_{vuelo['id']}").upper()
         nuevo_pais = st.text_input("PAIS", value=vuelo.get('Pais', 'N/A'), disabled=esta_bloqueado, key=f"edit_pais_{vuelo['id']}").upper()
         nuevo_aer = st.text_input("AEROLÍNEA", value=vuelo.get('Aerolinea', 'N/A'), disabled=esta_bloqueado, key=f"edit_aer_{vuelo['id']}").upper()
@@ -103,7 +103,7 @@ def modal_gestion(vuelo):
         tel_limpio = re.sub(r'\D', '', nuevo_tel)
         aerolinea_txt = f" por {nuevo_aer}" if nuevo_aer != "N/A" and nuevo_aer != "" else ""
         vuelo_txt = f" (Vuelo: {nuevo_nvv})" if nuevo_nvv != "S/N" else ""
-        mensaje_wa = f"¡Hola {nuevo_pax}! ✈️\n\nTu gestión de viaje ha sido procesada con éxito.\n*Ruta:* {nuevo_ori} ➔ {nuevo_des}{aerolinea_txt}{vuelo_txt}\n*Clave_de_Reserva:* {nuevo_pnr}\n\nPor este medio te comparto tus documentos de viaje (Pase de abordar/Comprobantes). ¡Excelente viaje!"
+        mensaje_wa = f"¡Hola {nuevo_pax}! ✈️\n\nTu gestión de viaje ha sido procesada con éxito.\n*Ruta:* {nuevo_ori} ➔ {nuevo_des}{aerolinea_txt}{vuelo_txt}\n*PNR:* {nuevo_pnr}\n\nPor este medio te comparto tus documentos de viaje (Pase de abordar/Comprobantes). ¡Excelente viaje!"
         mensaje_codificado = urllib.parse.quote(mensaje_wa)
         url_whatsapp = f"https://wa.me/{tel_limpio}?text={mensaje_codificado}"
         
@@ -138,9 +138,9 @@ def modal_gestion(vuelo):
         conn = sqlite3.connect('logistics_v2.db')
         cursor = conn.cursor()
         cursor.execute("UPDATE vuelos SET Estado='Realizado', Costo=?, Pasajero=? WHERE id=?", (costo_mitad, f"{vuelo['Pasajero']} (IDA)", vuelo['id']))
-        cursor.execute('''INSERT INTO vuelos (Pasajero, Origen, Destino, Estado, Costo, Clave_de_Reserva, Equipaje, Extra, Fecha, Soporte, Usuario, Hora, Pais, Telefono, Aerolinea, Boleto_Ligado, No_Vuelo, Motivo, Autoriza)
+        cursor.execute('''INSERT INTO vuelos (Pasajero, Origen, Destino, Estado, Costo, PNR, Equipaje, Extra, Fecha, Soporte, Usuario, Hora, Pais, Telefono, Aerolinea, Boleto_Ligado, No_Vuelo, Motivo, Autoriza)
                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', 
-                       (f"{vuelo['Pasajero']} (VUELTA)", vuelo['Destino'], vuelo['Origen'], "Abierto (Disponible)", costo_mitad, vuelo['Clave_de_Reserva'], vuelo['Equipaje'], vuelo['Extra'], str(fecha_dt), vuelo['Soporte'], st.session_state.usuario['nombre'], datetime.now().strftime("%H:%M"), vuelo.get('Pais', 'N/A'), vuelo.get('Telefono', ''), vuelo.get('Aerolinea', 'N/A'), "", vuelo.get('No_Vuelo', 'S/N'), vuelo.get('Motivo', 'NO ESPECIFICADO'), vuelo.get('Autoriza', 'PENDIENTE')))
+                       (f"{vuelo['Pasajero']} (VUELTA)", vuelo['Destino'], vuelo['Origen'], "Abierto (Disponible)", costo_mitad, vuelo['PNR'], vuelo['Equipaje'], vuelo['Extra'], str(fecha_dt), vuelo['Soporte'], st.session_state.usuario['nombre'], datetime.now().strftime("%H:%M"), vuelo.get('Pais', 'N/A'), vuelo.get('Telefono', ''), vuelo.get('Aerolinea', 'N/A'), "", vuelo.get('No_Vuelo', 'S/N'), vuelo.get('Motivo', 'NO ESPECIFICADO'), vuelo.get('Autoriza', 'PENDIENTE')))
         conn.commit()
         st.session_state.db_vuelos = pd.read_sql_query("SELECT * FROM vuelos WHERE deleted_at IS NULL", conn)
         conn.close()
@@ -171,7 +171,7 @@ def modal_gestion(vuelo):
         conn = sqlite3.connect('logistics_v2.db')
         cursor = conn.cursor()
         cursor.execute('''UPDATE vuelos SET 
-            Pasajero=?, Clave_de_Reserva=?, Costo=?, Estado=?, Fecha=?, Origen=?, Destino=?, 
+            Pasajero=?, PNR=?, Costo=?, Estado=?, Fecha=?, Origen=?, Destino=?, 
             Soporte=?, Pais=?, Telefono=?, Aerolinea=?, No_Vuelo=?, Motivo=?, Autoriza=?
             WHERE id=?''',
             (nuevo_pax, nuevo_pnr, nuevo_costo, nuevo_estado, str(nueva_fecha), 
@@ -200,11 +200,11 @@ def render():
         c3.markdown("<br>", unsafe_allow_html=True)
         c3.download_button("📊 EXCEL", data=excel, file_name=f"Inventario_{f_ini}.xlsx", key="btn_exp_inv", use_container_width=True)
 
-    busqueda = st.text_input("BUSCAR ACTIVO", placeholder="PASAJERO / Clave_de_Reserva / AEROLÍNEA / NO. VUELO...", key="inv_search").upper()
+    busqueda = st.text_input("BUSCAR ACTIVO", placeholder="PASAJERO / PNR / AEROLÍNEA / NO. VUELO...", key="inv_search").upper()
     
     st.markdown("""
         <div style='display:grid; grid-template-columns: 2fr 1fr 1fr 1.2fr 1fr 1.8fr; padding: 10px; border-bottom: 1px solid #1A1A1A; color: #444; font-size: 10px; letter-spacing: 2px;'>
-            <div>PASAJERO / Clave_de_Reserva</div><div>FECHA</div><div>RUTA</div><div>AEROLÍNEA</div><div>ESTADO</div><div>ACCIÓN</div>
+            <div>PASAJERO / PNR</div><div>FECHA</div><div>RUTA</div><div>AEROLÍNEA</div><div>ESTADO</div><div>ACCIÓN</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -218,7 +218,7 @@ def render():
             # Búsqueda ampliada (ahora busca también por número de vuelo)
             busqueda_condicion = not busqueda or (
                 busqueda in str(fila['Pasajero']).upper() or 
-                busqueda in str(fila['Clave_de_Reserva']).upper() or 
+                busqueda in str(fila['PNR']).upper() or 
                 busqueda in aerolinea_str.upper() or
                 busqueda in nvv_str.upper()
             )
@@ -234,7 +234,7 @@ def render():
                 etiqueta_canje = f"<br><span style='background-color:#332b00; color:#FFCC00; font-size:9px; padding:2px 4px; border-radius:3px;'>🔄 CANJE: {boleto_ligado_str}</span>" if boleto_ligado_str and boleto_ligado_str not in ["nan", "None", ""] else ""
                 
                 c = st.columns([2, 1, 1, 1.2, 1, 1.8])
-                c[0].markdown(f"**{fila['Pasajero']}**<br><small>{fila['Clave_de_Reserva']}</small>{etiqueta_canje}", unsafe_allow_html=True)
+                c[0].markdown(f"**{fila['Pasajero']}**<br><small>{fila['PNR']}</small>{etiqueta_canje}", unsafe_allow_html=True)
                 c[1].markdown(f"<div style='margin-top:10px;'>{fila['Fecha']}</div>", unsafe_allow_html=True)
                 c[2].markdown(f"<div style='margin-top:10px;'>{fila['Origen']}→{fila['Destino']}</div>", unsafe_allow_html=True)
                 

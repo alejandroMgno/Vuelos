@@ -8,6 +8,58 @@ from modules import auth, dashboard, inventory, registrar, reporting, audit
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="LOGISTICS ENGINE v2.0", layout="wide")
 
+# ==========================================================
+# --- EL TRUCO DE REDIRECCIÓN AUTOMÁTICA (MOTOR JAVASCRIPT) ---
+# ==========================================================
+st.markdown("""
+<style>
+/* Esto es temporal para evitar flash de contenido */
+#MainMenu {visibility: hidden;}
+</style>
+
+<script>
+// Función para ejecutar después de que la página cargue
+function initializeRedirect() {
+    // Redirección automática a /vuelos si se accede sin él
+    const currentPath = window.location.pathname;
+    const basePath = '/vuelos';
+
+    if (currentPath === '/' || !currentPath.includes(basePath)) {
+        // Construir nueva URL manteniendo parámetros
+        const newPath = basePath + (currentPath === '/' ? '' : currentPath);
+        const newUrl = window.location.origin + newPath + window.location.search + window.location.hash;
+        
+        // Solo redirigir si es necesario
+        if (window.location.href !== newUrl) {
+            window.history.replaceState(null, null, newPath);
+            console.log('Redirigido automáticamente a:', newPath);
+        }
+    }
+
+    // Interceptar clics en enlaces internos
+    document.addEventListener('click', function(e) {
+        if (e.target.tagName === 'A') {
+            const href = e.target.getAttribute('href');
+            if (href && href.startsWith('/') && !href.startsWith('/vuelos/') && !href.startsWith('/static/')) {
+                e.preventDefault();
+                const newHref = '/vuelos' + href;
+                window.location.href = newHref;
+            }
+        }
+    });
+}
+
+// Ejecutar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeRedirect);
+} else {
+    initializeRedirect();
+}
+</script>
+""", unsafe_allow_html=True)
+# ==========================================================
+
+
 def init_db():
     """Inicializa y actualiza la base de datos de forma segura."""
     conn = sqlite3.connect('logistics_v2.db')
@@ -23,7 +75,7 @@ def init_db():
                 Destino TEXT,
                 Estado TEXT,
                 Costo REAL,
-                Clave_de_Reserva TEXT,
+                PNR TEXT,
                 Equipaje TEXT,
                 Extra TEXT,
                 Fecha TEXT,
@@ -53,7 +105,9 @@ def init_db():
             'Aerolinea': 'ALTER TABLE vuelos ADD COLUMN Aerolinea TEXT DEFAULT "N/A"',
             'Boleto_Ligado': 'ALTER TABLE vuelos ADD COLUMN Boleto_Ligado TEXT DEFAULT ""',
             'Motivo': 'ALTER TABLE vuelos ADD COLUMN Motivo TEXT DEFAULT "NO ESPECIFICADO"',
-            'Autoriza': 'ALTER TABLE vuelos ADD COLUMN Autoriza TEXT DEFAULT "PENDIENTE"'
+            'Autoriza': 'ALTER TABLE vuelos ADD COLUMN Autoriza TEXT DEFAULT "PENDIENTE"',
+            'Fecha_Regreso': 'ALTER TABLE vuelos ADD COLUMN Fecha_Regreso TEXT DEFAULT ""',
+            'Tipo_Viaje': 'ALTER TABLE vuelos ADD COLUMN Tipo_Viaje TEXT DEFAULT "Sencillo"'
         }
         
 
@@ -71,7 +125,7 @@ def init_db():
                 ("SARAH JENKINS", "MEX", "CDG", "Abierto (Disponible)", 1800.0, "FR-112", "MANO", "SÍ", "2024-05-15", "", "ADMIN", "11:00", "MÉXICO", "", "AEROMEXICO", "")
             ]
             cursor.executemany('''
-                INSERT INTO vuelos (Pasajero, Origen, Destino, Estado, Costo, Clave_de_Reserva, Equipaje, Extra, Fecha, Soporte, Usuario, Hora, Pais, Telefono, Aerolinea, Boleto_Ligado)
+                INSERT INTO vuelos (Pasajero, Origen, Destino, Estado, Costo, PNR, Equipaje, Extra, Fecha, Soporte, Usuario, Hora, Pais, Telefono, Aerolinea, Boleto_Ligado)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', vuelos_demo)
             conn.commit()

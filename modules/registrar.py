@@ -35,10 +35,10 @@ def render():
         usar_saldo = st.toggle("🎟️ REUTILIZAR BOLETO ABIERTO (CANJE)", help="Vincula este nuevo vuelo a un saldo a favor anterior.", key=f"tgl_{rk}")
         if usar_saldo:
             if not df_abiertos.empty:
-                opciones = df_abiertos.apply(lambda x: f"ID: {x['id']} | Clave_de_Reserva: {x['Clave_de_Reserva']} | {x['Pasajero']} | ${x['Costo']}", axis=1).tolist()
+                opciones = df_abiertos.apply(lambda x: f"ID: {x['id']} | PNR: {x['PNR']} | {x['Pasajero']} | ${x['Costo']}", axis=1).tolist()
                 seleccion = st.selectbox("Selecciona el boleto a canjear:", opciones, key=f"sel_canje_{rk}")
                 id_abierto_seleccionado = int(seleccion.split(" | ")[0].replace("ID: ", ""))
-                pnr_ligado = seleccion.split(" | ")[1].replace("Clave_de_Reserva: ", "")
+                pnr_ligado = seleccion.split(" | ")[1].replace("PNR: ", "")
                 st.success(f"Vinculado exitosamente al boleto: {pnr_ligado}")
             else:
                 st.warning("No hay boletos abiertos disponibles.")
@@ -55,7 +55,7 @@ def render():
     sel_pax = c1.selectbox("🔍 PASAJERO", ["➕ REGISTRAR NUEVO..."] + sorted(pax_conocidos), key=f"sel_pax_{rk}")
     nom = c1.text_input("ESCRIBE NUEVO PASAJERO", key=f"new_pax_{rk}").upper() if sel_pax == "➕ REGISTRAR NUEVO..." else sel_pax
 
-    pnr = c2.text_input("🎫 Clave_de_Reserva", placeholder="Ej: XJ3K9P", key=f"pnr_{rk}").upper()
+    pnr = c2.text_input("🎫 PNR", placeholder="Ej: XJ3K9P", key=f"pnr_{rk}").upper()
     tel = c3.text_input("🟢 WHATSAPP", placeholder="Ej: 528100000000", key=f"tel_{rk}")
     
     # FILA 2: Rutas y Fechas
@@ -102,8 +102,8 @@ def render():
         if not nom or not nom.strip():
             st.error("❌ ERROR: Debes seleccionar o escribir el nombre del pasajero.")
             return
-        if not Clave_de_Reserva or not Clave_de_Reserva.strip():
-            st.error("❌ ERROR: El código de reserva (Clave_de_Reserva) es obligatorio.")
+        if not PNR or not PNR.strip():
+            st.error("❌ ERROR: El código de reserva (PNR) es obligatorio.")
             return
 
         # Manejo de archivos
@@ -125,12 +125,12 @@ def render():
             
             cursor.execute('''
                 INSERT INTO vuelos (
-                    Pasajero, Origen, Destino, Estado, Costo, Clave_de_Reserva, 
+                    Pasajero, Origen, Destino, Estado, Costo, PNR, 
                     Equipaje, Extra, Fecha, Pais, Soporte, Usuario, Hora, 
                     Telefono, Aerolinea, Boleto_Ligado, No_Vuelo, Motivo, Autoriza
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
-                nom.strip(), ori.strip(), des.strip(), est, cos, Clave_de_Reserva.strip(), 
+                nom.strip(), ori.strip(), des.strip(), est, cos, PNR.strip(), 
                 equ, ext, str(fec), pais, cadena_soportes, 
                 st.session_state.usuario['nombre'], datetime.now().strftime("%H:%M"), 
                 tel.strip(), aer.strip(), pnr_ligado, nvv.strip(),
@@ -146,7 +146,7 @@ def render():
             st.session_state.db_vuelos = pd.read_sql_query("SELECT * FROM vuelos WHERE deleted_at IS NULL", conn)
             conn.close()
 
-            st.toast(f"🛫 Registro de '{Clave_de_Reserva}' guardado exitosamente", icon="✅")
+            st.toast(f"🛫 Registro de '{PNR}' guardado exitosamente", icon="✅")
             
             # Limpiar formulario
             st.session_state['reg_key'] += 1 
